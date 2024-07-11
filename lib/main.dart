@@ -1,13 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:public_chat_with_gemini_in_flutter/widgets/chat_bubble.dart';
 import 'package:public_chat_with_gemini_in_flutter/widgets/message_box.dart';
+import 'package:public_chat_with_gemini_in_flutter/worker/gen_a_i_worker.dart';
 
+const imageGemini =
+    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThr7qrIazsvZwJuw-uZCtLzIjaAyVW_ZrlEQ&s';
+const imageUser = 'assets/images/logo_carrot.jpg';
 void main(List<String> args) {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  final GenAIWorker genAIWorker = GenAIWorker();
+  final ScrollController _scrollController =
+      ScrollController(initialScrollOffset: 0);
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -15,33 +34,56 @@ class MyApp extends StatelessWidget {
       home: Scaffold(
           body: SafeArea(
         child: Center(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                ChatBubble(
-                  avatarUrl:
-                      'https://t3.ftcdn.net/jpg/05/76/94/70/360_F_576947051_DFT5rJEsF8yturr1DOlB3rxhtxswGSmP.jpg',
-                  message:
-                      'Hello, World! Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!',
-                  isMe: true,
-                ),
-                ChatBubble(
-                  avatarUrl:
-                      'https://t3.ftcdn.net/jpg/05/76/94/70/360_F_576947051_DFT5rJEsF8yturr1DOlB3rxhtxswGSmP.jpg',
-                  message:
-                      'Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!Hello, World!',
-                  isMe: false,
-                ),
-                MessageBox(
-                  onSend: (String value) {
-                    print('Message sent $value');
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Expanded(
+                child: StreamBuilder(
+                  stream: genAIWorker.stream,
+                  builder: (context, snapshot) {
+                    final data = snapshot.data ?? [];
+                    // if data change then scroll to end
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      _scrollEndList();
+                    });
+                    return ListView.builder(
+                      controller: _scrollController,
+                      itemCount: data.length,
+                      itemBuilder: (context, index) {
+                        final ChatContent chatContent = data[index];
+                        final String message = chatContent.message;
+                        final bool isMe = chatContent.sender == Sender.user;
+                        final String avatar = isMe
+                            ? imageUser
+                            : 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThr7qrIazsvZwJuw-uZCtLzIjaAyVW_ZrlEQ&s';
+                        return ChatBubble(
+                          avatarUrl: avatar,
+                          message: message,
+                          isMe: isMe,
+                        );
+                      },
+                    );
                   },
                 ),
-              ],
-            ),
+              ),
+              MessageBox(
+                onSend: (String value) {
+                  genAIWorker.sendToGemini(value);
+                  _scrollEndList();
+                },
+              ),
+            ],
           ),
         ),
       )),
+    );
+  }
+
+  void _scrollEndList() {
+    _scrollController.animateTo(
+      _scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
     );
   }
 }

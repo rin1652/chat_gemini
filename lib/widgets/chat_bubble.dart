@@ -73,7 +73,7 @@ class ChatBubble extends StatelessWidget {
 }
 
 class _DefaultAvatarWidget extends StatelessWidget {
-  const _DefaultAvatarWidget({super.key});
+  const _DefaultAvatarWidget();
 
   @override
   Widget build(BuildContext context) {

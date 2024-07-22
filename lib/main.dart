@@ -6,21 +6,30 @@ import 'package:public_chat_with_gemini_in_flutter/worker/gen_a_i_worker.dart';
 const imageGemini =
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThr7qrIazsvZwJuw-uZCtLzIjaAyVW_ZrlEQ&s';
 const imageUser = 'assets/images/logo_carrot.jpg';
-void main(List<String> args) {
-  runApp(const MyApp());
+void main() {
+  runApp(MainApp());
 }
 
-class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+class MainApp extends StatefulWidget {
+  final GenAIWorker _genAIWorker;
+
+  MainApp({super.key, GenAIWorker? worker})
+      : _genAIWorker = worker ?? GenAIWorker();
 
   @override
-  State<MyApp> createState() => _MyAppState();
+  State<MainApp> createState() => _MainAppState();
 }
 
-class _MyAppState extends State<MyApp> {
-  final GenAIWorker genAIWorker = GenAIWorker();
+class _MainAppState extends State<MainApp> {
+  late GenAIWorker genAIWorker;
   final ScrollController _scrollController =
       ScrollController(initialScrollOffset: 0);
+
+  @override
+  void initState() {
+    genAIWorker = widget._genAIWorker;
+    super.initState();
+  }
 
   @override
   void dispose() {
@@ -38,7 +47,7 @@ class _MyAppState extends State<MyApp> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Expanded(
-                child: StreamBuilder(
+                child: StreamBuilder<List<ChatContent>>(
                   stream: genAIWorker.stream,
                   builder: (context, snapshot) {
                     final data = snapshot.data ?? [];

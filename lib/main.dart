@@ -1,40 +1,32 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:public_chat_with_gemini_in_flutter/bloc/gen_ai_bloc.dart';
+import 'package:public_chat_with_gemini_in_flutter/data/chat_content.dart';
 import 'package:public_chat_with_gemini_in_flutter/widgets/chat_bubble.dart';
 import 'package:public_chat_with_gemini_in_flutter/widgets/message_box.dart';
-import 'package:public_chat_with_gemini_in_flutter/worker/gen_a_i_worker.dart';
 
 const imageGemini =
     'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcThr7qrIazsvZwJuw-uZCtLzIjaAyVW_ZrlEQ&s';
 const imageUser = 'assets/images/logo_carrot.jpg';
 void main() {
-  runApp(MainApp());
+  runApp(
+    BlocProvider<GenAiBloc>(
+      create: (context) => GenAiBloc(),
+      child: MainApp(),
+    ),
+  );
 }
 
-class MainApp extends StatefulWidget {
-  final GenAIWorker _genAIWorker;
-
-  MainApp({super.key, GenAIWorker? worker})
-      : _genAIWorker = worker ?? GenAIWorker();
-
-  @override
-  State<MainApp> createState() => _MainAppState();
-}
-
-class _MainAppState extends State<MainApp> {
-  late GenAIWorker genAIWorker;
-  final ScrollController _scrollController =
+class MainApp extends StatelessWidget {
+  MainApp({super.key});
+  final ScrollController scrollController =
       ScrollController(initialScrollOffset: 0);
-
-  @override
-  void initState() {
-    genAIWorker = widget._genAIWorker;
-    super.initState();
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
+  void scrollEndList() {
+    scrollController.animateTo(
+      scrollController.position.maxScrollExtent,
+      duration: const Duration(milliseconds: 300),
+      curve: Curves.easeOut,
+    );
   }
 
   @override
@@ -47,16 +39,18 @@ class _MainAppState extends State<MainApp> {
             mainAxisSize: MainAxisSize.min,
             children: [
               Expanded(
-                child: StreamBuilder<List<ChatContent>>(
-                  stream: genAIWorker.stream,
-                  builder: (context, snapshot) {
-                    final data = snapshot.data ?? [];
-                    // if data change then scroll to end
-                    WidgetsBinding.instance.addPostFrameCallback((_) {
-                      _scrollEndList();
-                    });
+                child: BlocBuilder<GenAiBloc, GenAiState>(
+                  builder: (context, state) {
+                    final List<ChatContent> data = [];
+
+                    if (state is MessageUpdate) {
+                      data.addAll(state.contents);
+                      WidgetsBinding.instance.addPostFrameCallback(
+                        (_) => scrollEndList(),
+                      );
+                    }
                     return ListView.builder(
-                      controller: _scrollController,
+                      controller: scrollController,
                       itemCount: data.length,
                       itemBuilder: (context, index) {
                         final ChatContent chatContent = data[index];
@@ -77,22 +71,13 @@ class _MainAppState extends State<MainApp> {
               ),
               MessageBox(
                 onSend: (String value) {
-                  genAIWorker.sendToGemini(value);
-                  _scrollEndList();
+                  context.read<GenAiBloc>().add(SendMessageEvent(value));
                 },
               ),
             ],
           ),
         ),
       )),
-    );
-  }
-
-  void _scrollEndList() {
-    _scrollController.animateTo(
-      _scrollController.position.maxScrollExtent,
-      duration: const Duration(milliseconds: 300),
-      curve: Curves.easeOut,
     );
   }
 }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:public_chat_with_gemini_in_flutter/data/chat_content.dart';
 import 'package:public_chat_with_gemini_in_flutter/main.dart';
 import 'package:public_chat_with_gemini_in_flutter/widgets/chat_bubble.dart';
 import 'package:public_chat_with_gemini_in_flutter/widgets/message_box.dart';

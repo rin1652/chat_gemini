@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:google_generative_ai/google_generative_ai.dart';
 import 'package:mocktail/mocktail.dart';
+import 'package:public_chat_with_gemini_in_flutter/data/chat_content.dart';
 import 'package:public_chat_with_gemini_in_flutter/worker/gen_a_i_worker.dart';
 
 class MockGenerativeModel extends Mock implements GenerativeModelWrapper {}
